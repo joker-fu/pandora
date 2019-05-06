@@ -3,6 +3,10 @@ package tech.linjiang.pandora;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -94,7 +98,12 @@ class FuncController implements Application.ActivityLifecycleCallbacks, FuncView
         if (activity instanceof Dispatcher) {
             hideOverlay();
         }
-        curInfoView.updateText(activity.getClass().getName());
+        String fragName = getVisibleFragment(activity);
+        if (TextUtils.isEmpty(fragName)) {
+            curInfoView.updateText(activity.getClass().getName());
+        } else {
+            curInfoView.updateText(activity.getClass().getName() + fragName);
+        }
     }
 
     @Override
@@ -315,5 +324,33 @@ class FuncController implements Application.ActivityLifecycleCallbacks, FuncView
                 return false;
             }
         });
+    }
+
+    private String getVisibleFragment(Activity activity) {
+        StringBuilder builder = new StringBuilder();
+        if (activity instanceof AppCompatActivity) {
+            FragmentManager manager = ((AppCompatActivity) activity).getSupportFragmentManager();
+            List<Fragment> fragments = manager.getFragments();
+            if (fragments.size() > 0) {
+                for (Fragment fragment : fragments) {
+                    if (fragment != null && fragment.isVisible() && fragment.getUserVisibleHint()) {
+                        builder.append(fragment.getClass().getName());
+                    }
+                }
+            }
+        } else {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                android.app.FragmentManager manager = activity.getFragmentManager();
+                List<android.app.Fragment> fragments = manager.getFragments();
+                if (fragments.size() > 0) {
+                    for (android.app.Fragment fragment : fragments) {
+                        if (fragment != null && fragment.isVisible() && fragment.getUserVisibleHint()) {
+                            builder.append(fragment.getClass().getName());
+                        }
+                    }
+                }
+            }
+        }
+        return builder.toString();
     }
 }
