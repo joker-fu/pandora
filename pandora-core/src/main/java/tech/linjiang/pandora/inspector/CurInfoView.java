@@ -25,7 +25,6 @@ public class CurInfoView extends AppCompatTextView {
         setBackgroundColor(0x6f000000);
         setTextSize(14);
         setTextColor(Color.WHITE);
-        setGravity(Gravity.CENTER);
         setPadding(ViewKnife.dip2px(4), 0, ViewKnife.dip2px(4), 0);
     }
 

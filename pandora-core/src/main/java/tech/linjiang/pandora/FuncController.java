@@ -28,6 +28,7 @@ import tech.linjiang.pandora.util.ViewKnife;
 
 class FuncController implements Application.ActivityLifecycleCallbacks, FuncView.OnItemClickListener {
 
+    private Activity activity;
     private final FuncView funcView;
     private final CurInfoView curInfoView;
     private final GridLineView gridLineView;
@@ -94,20 +95,28 @@ class FuncController implements Application.ActivityLifecycleCallbacks, FuncView
     }
 
     @Override
-    public void onActivityResumed(Activity activity) {
+    public void onActivityResumed(final Activity activity) {
+        this.activity = activity;
         if (activity instanceof Dispatcher) {
             hideOverlay();
         }
-        String fragName = getVisibleFragment(activity);
-        if (TextUtils.isEmpty(fragName)) {
-            curInfoView.updateText(activity.getClass().getName());
-        } else {
-            curInfoView.updateText(activity.getClass().getName() + fragName);
-        }
+        activity.getWindow().getDecorView().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                String fragName = getVisibleFragment(activity);
+                if (TextUtils.isEmpty(fragName)) {
+                    curInfoView.updateText(activity.getClass().getName());
+                } else {
+                    curInfoView.updateText(activity.getClass().getName() + "\r\n" + fragName);
+                }
+            }
+        }, 100);
+
     }
 
     @Override
     public void onActivityPaused(Activity activity) {
+        this.activity = null;
         if (activity instanceof Dispatcher) {
             if (activeCount > 0) {
                 showOverlay();
@@ -284,6 +293,7 @@ class FuncController implements Application.ActivityLifecycleCallbacks, FuncView
 
             @Override
             public boolean onClick() {
+                onActivityResumed(activity);
                 boolean isOpen = curInfoView.isOpen();
                 curInfoView.toggle();
                 return !isOpen;
