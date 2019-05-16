@@ -8,10 +8,13 @@ import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import tech.linjiang.pandora.cache.Content;
 import tech.linjiang.pandora.core.R;
 import tech.linjiang.pandora.function.IFunc;
 import tech.linjiang.pandora.inspector.CurInfoView;
@@ -19,6 +22,7 @@ import tech.linjiang.pandora.inspector.GridLineView;
 import tech.linjiang.pandora.ui.Dispatcher;
 import tech.linjiang.pandora.ui.connector.Type;
 import tech.linjiang.pandora.ui.view.FuncView;
+import tech.linjiang.pandora.ui.view.PandoraFrameLayout;
 import tech.linjiang.pandora.util.Utils;
 import tech.linjiang.pandora.util.ViewKnife;
 
@@ -87,7 +91,21 @@ class FuncController implements Application.ActivityLifecycleCallbacks, FuncView
     }
 
     @Override
-    public void onActivityStarted(Activity activity) {
+    public void onActivityStarted(final Activity activity) {
+        ViewGroup contentParent = activity.findViewById(android.R.id.content);
+        View oldContent = contentParent.getChildAt(0);
+        if (oldContent != null) {
+            contentParent.removeView(oldContent);
+            PandoraFrameLayout newContent = new PandoraFrameLayout(activity);
+            newContent.setOnInterceptTouchEventListener(new PandoraFrameLayout.OnInterceptTouchEventListener() {
+                @Override
+                public void onTouch() {
+                    onActivityResumed(activity);
+                }
+            });
+            newContent.addView(oldContent);
+            contentParent.addView(newContent);
+        }
         activeCount++;
         if (activeCount == 1) {
             showOverlay();
@@ -127,6 +145,11 @@ class FuncController implements Application.ActivityLifecycleCallbacks, FuncView
 
     @Override
     public void onActivityStopped(Activity activity) {
+        ViewGroup contentParent = activity.findViewById(android.R.id.content);
+        View content = contentParent.getChildAt(0);
+        if (content instanceof PandoraFrameLayout) {
+            ((PandoraFrameLayout) content).setOnInterceptTouchEventListener(null);
+        }
         activeCount--;
         if (activeCount <= 0) {
             hideOverlay();
